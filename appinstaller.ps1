@@ -511,6 +511,10 @@ function Install-Apps {
   }
 }
 
+if (-not (Test-Path -Path $DownloadPath -PathType Container)) {
+  New-Item -Path $DownloadPath -ItemType Directory
+}
+
 $apps = $(Resolve-AppsLinks $(Get-Apps -AppsList $AppsList))
 
 $arguments = @{
@@ -524,3 +528,5 @@ if ($Parallel) {
 }
 
 Install-Apps -Apps $(Get-DownloadedApps @arguments) -DestinationPath $DestinationPath
+
+Remove-Item -Path $DownloadPath -Recurse -Force
