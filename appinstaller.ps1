@@ -495,8 +495,9 @@ function Install-Apps {
         PassThru = $true
       }
       if ($app.Arguments) {
-        $arguments.ArgumentList = foreach ($a in $app.Arguments) {
-          $a.ToString().
+        $rawArgs = @($app.Arguments)
+        $arguments.ArgumentList = foreach ($arg in $rawArgs) {
+          $arg.ToString().
           Replace('$DestinationPath', $DestinationPath).
           Replace('$Name', $app.Name)
         }
