@@ -482,12 +482,17 @@ function Install-Apps {
     $fileExtension = [System.IO.Path]::GetExtension($app.FilePath).ToLower()
     if ($fileExtension -in $executableExtensions) {
       Write-Host "Установка: $($App.Name)" -ForegroundColor Yellow
+      Write-Host $Item.Arguments
       $rawArgs = @($Item.Arguments)
+      Write-Host ""
+      Write-Host $rawArgs
       $argsForInstaller = foreach ($a in $rawArgs) {
         $a.ToString().
         Replace('$DestinationPath', $DestinationPath).
         Replace('$Name', $Item.Name)
       }
+      Write-Host ""
+      Write-Host $argsForInstaller
       $process = Start-Process -FilePath $app.FilePath -ArgumentList $argsForInstaller -Wait -PassThru
 
       if ($process.ExitCode -ne 0) {
@@ -526,6 +531,8 @@ $arguments = @{
 if ($Parallel) {
   $arguments.Parallel = $true
 }
+
+# Get-DownloadedApps @arguments
 
 Install-Apps -Apps $(Get-DownloadedApps @arguments) -DestinationPath $DestinationPath
 
