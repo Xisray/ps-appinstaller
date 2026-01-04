@@ -125,9 +125,10 @@ function Get-WebPageFileLink {
   if (-not $downloadLink) {
     throw "Download link not found"
   }
-
+  $downloadLink = $downloadLink.TrimStart('/')
   if ($downloadLink -notlike "http*") {
-    $downloadLink = "$PageUrl$downloadLink"
+    $baseUrl = $PageUrl.TrimEnd('/')
+    $downloadLink = "$baseUrl/$downloadLink"
   }
   return [tuple]::Create($downloadLink, $(Split-Path $downloadLink -Leaf))
 }
@@ -248,7 +249,6 @@ function Resolve-AppsLinks {
     [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
     [PSCustomObject[]]$Apps
   )
-
   process {
     foreach ($app in $Apps) {
       # Проверяем, что у элемента есть Name (обязательно для идентификации)
@@ -266,7 +266,6 @@ function Resolve-AppsLinks {
         }
 
         $downloadUrl, $fileName = $linkTuple.Item1, $linkTuple.Item2
-        Write-Host $app.Arguments
         [PSCustomObject]@{
           Name        = $app.Name
           Arguments   = $app.Arguments  # Может быть $null — это нормально
@@ -293,7 +292,7 @@ function Get-DownloadedApp {
     if ((Test-Path $App.FilePath) -and (-not $ForceDownload)) {
       return $App
     }
-    Write-Host "Скачивание: $($App.Name)" -ForegroundColor Yellow
+    Write-Host "Скачивание: $($App.Name) $($App.DownloadURL)" -ForegroundColor Yellow
     $arguments = @{
       Uri             = $App.DownloadURL
       OutFile         = $App.FilePath
@@ -324,7 +323,7 @@ function Get-DownloadedApps {
   )
   $successfulApps = @()
 
-  if ($Parallel) {
+  if ($Parallel -and $PSVersionTable.PSVersion.Major -ge 7) {
     Write-Host "Параллельное скачивание (ThrottleLimit: $ThrottleLimit)" -ForegroundColor Cyan
 
     $funcDef = ${function:Get-DownloadedApp}.ToString()
@@ -336,11 +335,11 @@ function Get-DownloadedApps {
       $arguments = @{
         App = $app
       }
-      if($force) {
+      if ($force) {
         $arguments.ForceDownload = $true
       }
       $result = Get-DownloadedApp @arguments;
-      if($result) { return $app } else { return $null }
+      if ($result) { return $app } else { return $null }
     } -ThrottleLimit $ThrottleLimit | Where-Object { $_ -ne $null }
   }
   else {
@@ -349,10 +348,10 @@ function Get-DownloadedApps {
       $arguments = @{
         App = $app
       }
-      if($ForceDownload) {
+      if ($ForceDownload) {
         $arguments.ForceDownload = $true
       }
-      if(Get-DownloadedApp @arguments) {
+      if (Get-DownloadedApp @arguments) {
         $successfulApps += $app
       }
     }
@@ -474,43 +473,49 @@ function Install-Apps {
   )
   $executableExtensions = @('.exe', '.msi')
   foreach ($app in $Apps) {
-    Write-Host "Установка: $($App.Name)" -ForegroundColor Yellow
     if (-not (Test-Path $app.FilePath)) {
       Write-Error "Файл не найден: $($app.FilePath)"
       continue
     }
     $fileExtension = [System.IO.Path]::GetExtension($app.FilePath).ToLower()
     if ($fileExtension -in $executableExtensions) {
-      Write-Host "Установка: $($App.Name)" -ForegroundColor Yellow
-      Write-Host $Item.Arguments
-      $rawArgs = @($Item.Arguments)
-      Write-Host ""
-      Write-Host $rawArgs
-      $argsForInstaller = foreach ($a in $rawArgs) {
-        $a.ToString().
-        Replace('$DestinationPath', $DestinationPath).
-        Replace('$Name', $Item.Name)
+      Write-Host "Установка: $($app.Name)" -ForegroundColor Yellow
+      # $rawArgs = @($app.Arguments)
+      # $argsForInstaller = foreach ($a in $rawArgs) {
+      #   $a.ToString().
+      #   Replace('$DestinationPath', $DestinationPath).
+      #   Replace('$Name', $app.Name)
+      # }
+      $arguments = @{
+        FilePath = $app.FilePath
+        Wait     = $true
+        PassThru = $true
       }
-      Write-Host ""
-      Write-Host $argsForInstaller
-      $process = Start-Process -FilePath $app.FilePath -ArgumentList $argsForInstaller -Wait -PassThru
+      if ($app.Arguments) {
+        $arguments.ArgumentList = foreach ($a in $rawArgs) {
+          $a.ToString().
+          Replace('$DestinationPath', $DestinationPath).
+          Replace('$Name', $app.Name)
+        }
+      }
+      $process = Start-Process @arguments
 
       if ($process.ExitCode -ne 0) {
         throw "Ошибка при установке. Код выхода: $($process.ExitCode)"
       }
       else {
-        Write-Host "Приложение $($App.Name) установлено" -ForegroundColor Green
+        Write-Host "Приложение $($app.Name) установлено" -ForegroundColor Green
       }
 
     }
     else {
-      Write-Host "Распаковка: $($App.Name)" -ForegroundColor Yellow
+      Write-Host "Распаковка: $($app.Name)" -ForegroundColor Yellow
       try {
-        Expand-Archive-Power -Path $app.FilePath -DestinationPath $DestinationPath -Force
-        Write-Host "Архив $($App.Name) успешно распакован" -ForegroundColor Green
+        Expand-Archive-Power -Path (Join-Path -Path $app.FilePath -ChildPath $app.Name) -DestinationPath $DestinationPath -Force
+        Write-Host "Архив $($app.Name) успешно распакован" -ForegroundColor Green
       }
       catch {
-
+        Write-Error "Архив $($app.Name) не распакован"
       }
     }
   }
@@ -519,21 +524,20 @@ function Install-Apps {
 if (-not (Test-Path -Path $DownloadPath -PathType Container)) {
   New-Item -Path $DownloadPath -ItemType Directory
 }
-
 $apps = $(Resolve-AppsLinks $(Get-Apps -AppsList $AppsList))
 
 $arguments = @{
   Apps          = $apps
   ThrottleLimit = $ThrottleLimit
-  ForceDownload = $true
+  # ForceDownload = $true
 }
 
 if ($Parallel) {
   $arguments.Parallel = $true
 }
 
-# Get-DownloadedApps @arguments
+Get-DownloadedApps @arguments
 
-Install-Apps -Apps $(Get-DownloadedApps @arguments) -DestinationPath $DestinationPath
+# Install-Apps -Apps $(Get-DownloadedApps @arguments) -DestinationPath $DestinationPath
 
-Remove-Item -Path $DownloadPath -Recurse -Force
+# Remove-Item -Path $DownloadPath -Recurse -Force
