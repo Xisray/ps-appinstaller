@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
   [Parameter(Mandatory = $false, ValueFromPipeline = $true)]
-  [string]$AppsFilePath,
+  [string]$AppsList,
 
   [Parameter(Mandatory = $false)]
   [string]$DownloadPath = "$env:TEMP\AppInstaller"
@@ -180,30 +180,30 @@ function Get-FileFromWebPage {
 function Get-Apps {
   param(
     [Parameter(Mandatory = $false)]
-    [string]$AppsFilePath
+    [string]$AppsList
   )
 
   # Если путь не указан, ищем apps.json рядом со скриптом
-  if ([string]::IsNullOrWhiteSpace($AppsFilePath)) {
+  if ([string]::IsNullOrWhiteSpace($AppsList)) {
     if ($PSScriptRoot) {
-      $AppsFilePath = Join-Path -Path $PSScriptRoot -ChildPath "apps.json"
+      $AppsList = Join-Path -Path $PSScriptRoot -ChildPath "apps.json"
     }
     else {
-      $AppsFilePath = Join-Path -Path (Get-Location) -ChildPath "apps.json"
+      $AppsList = Join-Path -Path (Get-Location) -ChildPath "apps.json"
     }
 
-    if (-not (Test-Path $AppsFilePath)) {
-      throw "Файл конфигурации не найден: $AppsFilePath"
+    if (-not (Test-Path $AppsList)) {
+      throw "Файл конфигурации не найден: $AppsList"
     }
 
-    Write-Verbose "Используется конфигурация по умолчанию: $AppsFilePath"
+    Write-Verbose "Используется конфигурация по умолчанию: $AppsList"
   }
 
   # Проверяем, является ли путь URL
-  if ($AppsFilePath -match '^https?://') {
-    Write-Verbose "Загрузка конфигурации из URL: $AppsFilePath"
+  if ($AppsList -match '^https?://') {
+    Write-Verbose "Загрузка конфигурации из URL: $AppsList"
     try {
-      $jsonContent = Invoke-RestMethod -Uri $AppsFilePath -UseBasicParsing
+      $jsonContent = Invoke-RestMethod -Uri $AppsList -UseBasicParsing
       return $jsonContent
     }
     catch {
@@ -212,13 +212,13 @@ function Get-Apps {
   }
   # Локальный файл
   else {
-    if (-not (Test-Path $AppsFilePath)) {
-      throw "Файл конфигурации не найден: $AppsFilePath"
+    if (-not (Test-Path $AppsList)) {
+      throw "Файл конфигурации не найден: $AppsList"
     }
 
-    Write-Verbose "Чтение локального файла конфигурации: $AppsFilePath"
+    Write-Verbose "Чтение локального файла конфигурации: $AppsList"
     try {
-      $jsonContent = Get-Content -Path $AppsFilePath -Raw | ConvertFrom-Json
+      $jsonContent = Get-Content -Path $AppsList -Raw | ConvertFrom-Json
       return $jsonContent
     }
     catch {
@@ -227,4 +227,4 @@ function Get-Apps {
   }
 }
 
-Write-Host $(Get-Apps)
+Write-Host $(Get-Apps -AppsList $AppsList)
