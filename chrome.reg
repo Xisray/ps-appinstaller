@@ -1,0 +1,30 @@
+﻿Windows Registry Editor Version 5.00
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Google\Chrome]
+"BookmarkBarEnabled"=dword:00000001
+"ManagedBookmarks"="[{\"toplevel_name\":\"Панель закладок\"},{\"name\":\"Алгоритмика\",\"url\":\"https://learn.algoritmika.org\"},{\"name\":\"Тильда\",\"url\":\"https://tilda.ru\"}]"
+"BrowserAddPersonEnabled"=dword:00000001
+;; "ForceEphemeralProfiles"=dword:00000001
+"ForceEphemeralProfiles"=-
+"RoamingProfileSupportEnabled"=dword:00000001
+"BrowserSignin"=dword:00000000
+"SyncDisabled"=dword:00000001
+"PrivacySandboxPromptEnabled"=dword:00000000
+"PromotionsEnabled"=dword:00000000
+"PasswordManagerEnabled"=dword:00000000
+
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Google\Chrome\ExtensionInstallBlocklist]
+"1"="*"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Google\Chrome\ExtensionInstallForcelist]
+;; "1"="ddkjiahejlhfcafbddmgiahcphecmpfh;https://clients2.google.com/service/update2/crx"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Google\Chrome\ClearBrowsingDataOnExitList]
+"1"="browsing_history"
+"2"="download_history"
+"3"="cookies_and_other_site_data"
+"4"="cached_images_and_files"
+"5"="password_signin"
+"6"="autofill"
+"7"="hosted_app_data"

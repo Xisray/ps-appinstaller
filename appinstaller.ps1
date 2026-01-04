@@ -13,6 +13,8 @@ param(
   [Parameter(Mandatory = $false)]
   [switch]$Force,
   [Parameter(Mandatory = $false)]
+  [switch]$OnlyDownload,
+  [Parameter(Mandatory = $false)]
   [switch]$KeepFiles
 )
 
@@ -496,7 +498,6 @@ function Install-Apps {
       }
       if ($app.Arguments) {
         $rawArgs = @($app.Arguments)
-        Write-Host $rawArgs
         $arguments.ArgumentList = foreach ($arg in $rawArgs) {
           $arg.ToString().
           Replace('$DestinationPath', $DestinationPath).
@@ -543,8 +544,11 @@ if ($Force) {
   $arguments.ForceDownload = $true
 }
 
-Install-Apps -Apps $(Get-DownloadedApps @arguments) -DestinationPath $DestinationPath
-
-if (-not $KeepFiles) {
-  Remove-Item -Path $DownloadPath -Recurse -Force
+$apps = Get-DownloadedApps @arguments
+if (-not $OnlyDownload) {
+  Install-Apps -Apps $apps -DestinationPath $DestinationPath
+  if (-not $KeepFiles) {
+    Remove-Item -Path $DownloadPath -Recurse -Force
+  }
 }
+

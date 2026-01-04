@@ -4,6 +4,7 @@ Windows Registry Editor Version 5.00
 "RestrictRun"=dword:00000001
 
 [HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer\RestrictRun]
+"explorer.exe"="explorer.exe"
 "chrome.exe"="chrome.exe"
 "Code.exe"="code.exe"
 "python.exe"="python.exe"
@@ -15,4 +16,11 @@ Windows Registry Editor Version 5.00
 "openshot-qt.exe"="openshot-qt.exe"
 "openshot-qt-cli.exe"="openshot-qt-cli.exe"
 "RobloxStudioBeta.exe"="RobloxStudioBeta.exe"
+"notepad.exe"="notepad.exe"
+"taskmgr.exe"="taskmgr.exe"
 
+[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System]
+"EnableLUA"=dword:00000001
+"ConsentPromptBehaviorAdmin"=dword:00000002
+"PromptOnSecureDesktop"=dword:00000001
+"ConsentPromptBehaviorUser"=dword:00000003
