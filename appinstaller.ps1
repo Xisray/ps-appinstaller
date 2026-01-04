@@ -5,7 +5,7 @@ param(
   [Parameter(Mandatory = $false)]
   [string]$DownloadPath = "$env:TEMP\AppInstaller",
   [Parameter(Mandatory = $false)]
-  [string]$DestinationPath = (Join-Path -Path (Get-Location) -ChildPath "apps"),
+  [string]$DestinationPath = ${env:ProgramFiles},
   [Parameter(Mandatory = $false)]
   [int]$ThrottleLimit = 5,
   [Parameter(Mandatory = $false)]
