@@ -496,6 +496,7 @@ function Install-Apps {
       }
       if ($app.Arguments) {
         $rawArgs = @($app.Arguments)
+        Write-Host $rawArgs
         $arguments.ArgumentList = foreach ($arg in $rawArgs) {
           $arg.ToString().
           Replace('$DestinationPath', $DestinationPath).
