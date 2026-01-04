@@ -9,7 +9,11 @@ param(
   [Parameter(Mandatory = $false)]
   [int]$ThrottleLimit = 5,
   [Parameter(Mandatory = $false)]
-  [switch]$Parallel
+  [switch]$Parallel,
+  [Parameter(Mandatory = $false)]
+  [switch]$Force,
+  [Parameter(Mandatory = $false)]
+  [switch]$KeepFiles
 )
 
 function Get-YandexDiskFileLink {
@@ -251,7 +255,6 @@ function Resolve-AppsLinks {
   )
   process {
     foreach ($app in $Apps) {
-      # Проверяем, что у элемента есть Name (обязательно для идентификации)
       if (-not $app.Name) {
         Write-Warning "Пропуск элемента без свойства 'Name'"
         continue
@@ -268,7 +271,7 @@ function Resolve-AppsLinks {
         $downloadUrl, $fileName = $linkTuple.Item1, $linkTuple.Item2
         [PSCustomObject]@{
           Name        = $app.Name
-          Arguments   = $app.Arguments  # Может быть $null — это нормально
+          Arguments   = $app.Arguments
           DownloadUrl = $downloadUrl
           FilePath    = $(Join-Path -Path $DownloadPath -ChildPath $fileName)
         }
@@ -529,15 +532,17 @@ $apps = $(Resolve-AppsLinks $(Get-Apps -AppsList $AppsList))
 $arguments = @{
   Apps          = $apps
   ThrottleLimit = $ThrottleLimit
-  # ForceDownload = $true
 }
 
 if ($Parallel) {
   $arguments.Parallel = $true
 }
+if ($Force) {
+  $arguments.ForceDownload = $true
+}
 
-Get-DownloadedApps @arguments
+Install-Apps -Apps $(Get-DownloadedApps @arguments) -DestinationPath $DestinationPath
 
-# Install-Apps -Apps $(Get-DownloadedApps @arguments) -DestinationPath $DestinationPath
-
-# Remove-Item -Path $DownloadPath -Recurse -Force
+if (-not $KeepFiles) {
+  Remove-Item -Path $DownloadPath -Recurse -Force
+}
