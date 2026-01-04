@@ -266,7 +266,7 @@ function Resolve-AppsLinks {
         }
 
         $downloadUrl, $fileName = $linkTuple.Item1, $linkTuple.Item2
-
+        Write-Host $app.Arguments
         [PSCustomObject]@{
           Name        = $app.Name
           Arguments   = $app.Arguments  # Может быть $null — это нормально
