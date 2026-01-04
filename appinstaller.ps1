@@ -511,7 +511,7 @@ function Install-Apps {
     else {
       Write-Host "Распаковка: $($app.Name)" -ForegroundColor Yellow
       try {
-        Expand-Archive-Power -Path (Join-Path -Path $app.FilePath -ChildPath $app.Name) -DestinationPath $DestinationPath -Force
+        Expand-Archive-Power -Path $app.FilePath -DestinationPath (Join-Path -Path $DestinationPath -ChildPath $app.Name) -Force
         Write-Host "Архив $($app.Name) успешно распакован" -ForegroundColor Green
       }
       catch {
