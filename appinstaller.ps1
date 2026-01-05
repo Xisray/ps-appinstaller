@@ -146,6 +146,60 @@ function Get-Apps {
     [string]$AppsList
   )
 
+  $possiblePaths = @()
+  if (-not [string]::IsNullOrWhiteSpace($AppsList)) {
+    if ($AppsList -match '^https?://') {
+      Write-Verbose "Загрузка конфигурации из URL: $AppsList"
+      $jsonContent = Invoke-RestMethod -Uri $AppsList -UseBasicParsing -ErrorAction Stop
+      Write-Verbose "Успешно загружено из URL"
+      return $jsonContent
+    }
+    $possiblePaths += $AppsList.Trim()
+    Write-Verbose "Попытка использовать указанный AppsList: $AppsList"
+  }
+
+  if (-not [string]::IsNullOrWhiteSpace($DownloadPath)) {
+    $path = Join-Path -Path $DownloadPath -ChildPath 'apps.json'
+    $possiblePaths += $path
+    Write-Verbose "Добавлен путь из `$DownloadPath: $path"
+  }
+
+  if ($PSScriptRoot) {
+    $path = Join-Path -Path $PSScriptRoot -ChildPath 'apps.json'
+    $possiblePaths += $path
+    Write-Verbose "Добавлен путь из `$PSScriptRoot: $path"
+  }
+
+  $path = Join-Path -Path (Get-Location) -ChildPath 'apps.json'
+  $possiblePaths += $path
+  Write-Verbose "Добавлен путь из текущей директории: $path"
+
+  foreach ($source in $possiblePaths) {
+    try {
+      if (-not (Test-Path -Path $source -PathType Leaf)) {
+        Write-Verbose "Файл не существует: $source"
+        continue
+      }
+
+      Write-Verbose "Чтение локального файла: $source"
+      $jsonContent = Get-Content -Path $source -Raw -ErrorAction Stop | ConvertFrom-Json
+      Write-Verbose "Успешно прочитан файл: $source"
+      return $jsonContent
+    }
+    catch {
+      Write-Verbose "Ошибка при обработке '$source': $_"
+      continue
+    }
+  }
+}
+
+function Get-Apps1 {
+  [CmdletBinding()]
+  param(
+    [Parameter(Mandatory = $false)]
+    [string]$AppsList
+  )
+
   # Если путь не указан, ищем apps.json рядом со скриптом
   if ([string]::IsNullOrWhiteSpace($AppsList)) {
     if ($PSScriptRoot) {
